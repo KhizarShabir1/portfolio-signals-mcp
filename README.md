@@ -1,9 +1,6 @@
 # Portfolio Signals MCP
 
-[![PyPI](https://img.shields.io/pypi/v/portfolio-signals-mcp)](https://pypi.org/project/portfolio-signals-mcp/)
-[![Python](https://img.shields.io/pypi/pyversions/portfolio-signals-mcp)](https://pypi.org/project/portfolio-signals-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![CI](https://github.com/KhizarShabir1/portfolio-signals-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/KhizarShabir1/portfolio-signals-mcp/actions/workflows/ci.yml)
 
 An MCP server that gives any AI coding agent (Claude Code, Cursor, Claude Desktop, etc.) real-time stock quotes and **computed** technical-analysis signals — RSI, MACD crossovers, golden/death crosses, and whole-portfolio weekly digests. Indicators are calculated in code, not by the LLM, so the numbers are right.
 
@@ -72,14 +69,6 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-### Remote (HTTP)
-
-A hosted instance runs the same server over streamable HTTP — no local install at all:
-
-```bash
-claude mcp add --transport http portfolio-signals https://portfolio-signals-mcp.fly.dev/mcp
-```
-
 ## From source
 
 ```bash
@@ -89,10 +78,6 @@ pip install -e .
 portfolio-signals-mcp           # stdio
 portfolio-signals-mcp --http    # streamable HTTP on :8000 (PORT env to change)
 ```
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Disclaimer
 
