@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "portfolio-signals-mcp"
-version = "0.1.0"
+version = "0.1.1"
 description = "MCP server for stock quotes and technical-analysis signals (RSI, MACD, SMA crossovers, portfolio digests) via Yahoo Finance"
 readme = "README.md"
 license = "MIT"
