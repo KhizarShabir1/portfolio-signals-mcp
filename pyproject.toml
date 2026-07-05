@@ -1,0 +1,37 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "portfolio-signals-mcp"
+version = "0.1.0"
+description = "MCP server for stock quotes and technical-analysis signals (RSI, MACD, SMA crossovers, portfolio digests) via Yahoo Finance"
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.10"
+authors = [{ name = "Khizar Shabir", email = "hkhizer2@gmail.com" }]
+keywords = ["mcp", "model-context-protocol", "stocks", "finance", "technical-analysis", "yfinance"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Office/Business :: Financial :: Investment",
+]
+dependencies = [
+    "mcp>=1.2.0",
+    "yfinance>=0.2.40",
+    "pandas>=2.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/KhizarShabir1/portfolio-signals-mcp"
+Repository = "https://github.com/KhizarShabir1/portfolio-signals-mcp"
+Issues = "https://github.com/KhizarShabir1/portfolio-signals-mcp/issues"
+
+[project.scripts]
+portfolio-signals-mcp = "portfolio_signals_mcp.server:main"
+
+[project.optional-dependencies]
+test = ["pytest>=8.0", "anyio>=4.0"]
+
+[tool.pytest.ini_options]
+markers = ["network: tests that hit Yahoo Finance (deselect with -m 'not network')"]

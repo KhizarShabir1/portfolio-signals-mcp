@@ -1,0 +1,15 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+.fly/
+.DS_Store
+
+# Dev/ops files not for public repo
+RUNBOOK.md
+.pytest_cache/
+fly.toml
+server.json
