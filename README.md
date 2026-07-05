@@ -1,5 +1,7 @@
 # Portfolio Signals MCP
 
+[![PyPI](https://img.shields.io/pypi/v/portfolio-signals-mcp)](https://pypi.org/project/portfolio-signals-mcp/)
+[![Python](https://img.shields.io/pypi/pyversions/portfolio-signals-mcp)](https://pypi.org/project/portfolio-signals-mcp/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 An MCP server that gives any AI coding agent (Claude Code, Cursor, Claude Desktop, etc.) real-time stock quotes and **computed** technical-analysis signals — RSI, MACD crossovers, golden/death crosses, and whole-portfolio weekly digests. Indicators are calculated in code, not by the LLM, so the numbers are right.
