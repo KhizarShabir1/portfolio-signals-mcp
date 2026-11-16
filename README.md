@@ -73,14 +73,6 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json`:
 }
 ```
 
-### Remote (HTTP)
-
-No local install — connects directly to the hosted instance:
-
-```bash
-claude mcp add --transport http portfolio-signals https://portfolio-signals-mcp.fly.dev/mcp
-```
-
 ## From source
 
 ```bash
