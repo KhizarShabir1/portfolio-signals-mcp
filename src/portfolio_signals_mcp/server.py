@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import argparse
 import os
+from typing import Literal
 
 import pandas as pd
 import yfinance as yf
@@ -28,6 +29,16 @@ mcp = FastMCP(
     host=os.environ.get("HOST", "0.0.0.0"),
     port=int(os.environ.get("PORT", "8000")),
 )
+
+# Valid lookback windows, exposed in the tool schema so agents see them up front.
+Period = Literal["1mo", "3mo", "6mo", "1y", "2y", "5y"]
+
+
+class TickerNotFoundError(ValueError):
+    """The symbol returned no price history (bad or delisted ticker).
+
+    Retrying will not help, unlike a network or rate-limit failure.
+    """
 
 
 # ---------------------------------------------------------------------------
@@ -87,8 +98,26 @@ def _sma_signals(close: pd.Series) -> dict:
 def _history(ticker: str, period: str = "1y") -> pd.DataFrame:
     df = yf.Ticker(ticker).history(period=period, auto_adjust=True)
     if df.empty:
-        raise ValueError(f"No data found for ticker '{ticker}'. Check the symbol.")
+        raise TickerNotFoundError(f"No data found for ticker '{ticker}'. Check the symbol.")
     return df
+
+
+def _range_52w(df: pd.DataFrame) -> tuple[float, float]:
+    """True 52-week high and low, from intraday highs and lows.
+
+    Using closes instead would understate the high and overstate the low,
+    which makes pct_off_52w_high look better than it is.
+    """
+    return float(df["High"].max()), float(df["Low"].min())
+
+
+def _error_entry(ticker: str, exc: Exception) -> dict:
+    """Per-ticker error for batch tools.
+
+    error_type lets the agent tell a bad symbol (TickerNotFoundError: don't
+    retry) from a transient failure such as a network error (retry).
+    """
+    return {"ticker": ticker.upper(), "error": str(exc), "error_type": type(exc).__name__}
 
 
 # ---------------------------------------------------------------------------
@@ -107,14 +136,15 @@ def get_quote(ticker: str) -> dict:
     close = df["Close"]
     price = float(close.iloc[-1])
     prev = float(close.iloc[-2])
+    high_52w, low_52w = _range_52w(df)
     return {
         "ticker": ticker.upper(),
         "price": round(price, 2),
         "day_change_pct": round((price - prev) / prev * 100, 2),
         "volume": int(df["Volume"].iloc[-1]),
-        "52w_high": round(float(close.max()), 2),
-        "52w_low": round(float(close.min()), 2),
-        "pct_off_52w_high": round((price / float(close.max()) - 1) * 100, 2),
+        "52w_high": round(high_52w, 2),
+        "52w_low": round(low_52w, 2),
+        "pct_off_52w_high": round((price / high_52w - 1) * 100, 2),
         "as_of": str(df.index[-1].date()),
     }
 
@@ -160,12 +190,15 @@ def get_technical_signals(ticker: str) -> dict:
 
 
 @mcp.tool()
-def compare_tickers(tickers: list[str], period: str = "3mo") -> dict:
+def compare_tickers(tickers: list[str], period: Period = "3mo") -> dict:
     """Compare total returns of multiple tickers over a period.
+
+    A symbol that fails is reported with error and error_type instead of
+    failing the whole call.
 
     Args:
         tickers: List of symbols, e.g. ['AAPL', 'MSFT', 'VOO'].
-        period: One of '1mo', '3mo', '6mo', '1y', '2y', '5y'.
+        period: Lookback window for the returns.
     """
     results = []
     for t in tickers:
@@ -176,7 +209,7 @@ def compare_tickers(tickers: list[str], period: str = "3mo") -> dict:
                             "start": round(float(close.iloc[0]), 2),
                             "end": round(float(close.iloc[-1]), 2)})
         except Exception as e:  # keep going if one symbol fails
-            results.append({"ticker": t.upper(), "error": str(e)})
+            results.append(_error_entry(t, e))
     ranked = sorted([r for r in results if "return_pct" in r],
                     key=lambda r: r["return_pct"], reverse=True)
     return {"period": period, "results": results,
@@ -209,8 +242,8 @@ def weekly_digest(tickers: list[str]) -> dict:
                 "rsi_14": _rsi(close),
                 "macd_vs_signal": _macd(close)["vs_signal"],
             })
-        except Exception as e:
-            holdings.append({"ticker": t.upper(), "error": str(e)})
+        except Exception as e:  # keep going if one symbol fails
+            holdings.append(_error_entry(t, e))
 
     ok = [h for h in holdings if "1w_return_pct" in h]
     return {

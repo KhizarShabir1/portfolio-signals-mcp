@@ -39,15 +39,20 @@ async def test_tools_discoverable():
     async with stdio_client(SERVER) as (r, w):
         async with ClientSession(r, w) as s:
             await s.initialize()
-            names = {t.name for t in (await s.list_tools()).tools}
-    assert names == {"get_quote", "get_technical_signals", "compare_tickers", "weekly_digest"}
+            tools = {t.name: t for t in (await s.list_tools()).tools}
+    assert set(tools) == {"get_quote", "get_technical_signals", "compare_tickers", "weekly_digest"}
+    # Valid periods are advertised in the schema, not only in the docstring.
+    period = tools["compare_tickers"].inputSchema["properties"]["period"]
+    assert period["enum"] == ["1mo", "3mo", "6mo", "1y", "2y", "5y"]
 
 
 async def test_get_quote():
     out = await _call("get_quote", {"ticker": "AAPL"})
     assert out["ticker"] == "AAPL"
     assert out["price"] > 0
-    assert out["52w_low"] <= out["price"] <= out["52w_high"] * 1.01
+    # The 52-week range comes from intraday highs and lows, so the last close
+    # always sits inside it.
+    assert out["52w_low"] <= out["price"] <= out["52w_high"]
 
 
 async def test_get_technical_signals():
@@ -80,6 +85,8 @@ async def test_bad_ticker_degrades_gracefully():
     errs = [h for h in out["holdings"] if "error" in h]
     oks = [h for h in out["holdings"] if "1w_return_pct" in h]
     assert len(errs) == 1 and len(oks) == 1
+    # The agent can tell "bad symbol, don't retry" from a transient failure.
+    assert errs[0]["error_type"] == "TickerNotFoundError"
 
 
 async def test_invalid_ticker_returns_tool_error():

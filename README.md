@@ -21,6 +21,8 @@ mcp-name: io.github.KhizarShabir1/portfolio-signals
 
 **Design principle:** tools return measurements and standard threshold classifications (RSI 70/30 zones, golden/death cross, MACD vs signal line) — never directional opinions or narrative summaries. Interpretation is the agent's job; determinism is the server's.
 
+**Batch tools degrade per ticker:** if one symbol fails, `compare_tickers` and `weekly_digest` still return the rest, and the failed entry carries `error` and `error_type`. `TickerNotFoundError` means a bad symbol (don't retry); other types, such as `ConnectionError`, are transient (retry).
+
 ## Quick start
 
 No install needed if you have [uv](https://docs.astral.sh/uv/):
@@ -87,6 +89,14 @@ cd portfolio-signals-mcp
 pip install -e .
 portfolio-signals-mcp           # stdio
 portfolio-signals-mcp --http    # streamable HTTP on :8000 (PORT env to change)
+```
+
+## Tests
+
+```bash
+pip install -e ".[test]"
+pytest -m "not network"          # offline: indicator math, 52-week range, error handling, tool schema
+pytest tests/test_mcp_e2e.py -v  # end to end: starts the real server over stdio and calls every tool through the protocol (needs internet)
 ```
 
 ## Disclaimer
